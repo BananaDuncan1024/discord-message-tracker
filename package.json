@@ -1,0 +1,26 @@
+{
+  "name": "discord-message-monitor",
+  "version": "1.0.0",
+  "description": "Discord bot for monitoring and recovering deleted messages",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch src/index.ts",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "discord.js": "^14.26.4",
+    "fast-check": "^4.7.0",
+    "winston": "^3.19.0"
+  }
+}
