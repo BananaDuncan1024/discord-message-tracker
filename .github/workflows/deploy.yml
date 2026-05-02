@@ -1,0 +1,58 @@
+name: Deploy to GCP
+
+on:
+  push:
+    tags:
+      - 'v*' # 只有當標記 (tag) 開頭為 'v' 時才會觸發 (例如: git tag v1.0.0 && git push origin v1.0.0)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    # 這是 OIDC 驗證最重要的設定：必須開啟 id-token 的 write 權限
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 透過 Workload Identity Federation (OIDC) 驗證 GCP
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          # TODO: 填入你的 Workload Identity Provider 完整資源名稱
+          workload_identity_provider: 'projects/YOUR_PROJECT_NUMBER/locations/global/workloadIdentityPools/YOUR_POOL/providers/YOUR_PROVIDER'
+          # TODO: 填入你要扮演的 GCP Service Account Email
+          service_account: 'your-service-account@your-project-id.iam.gserviceaccount.com'
+
+      # 設定 Google Cloud CLI
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # 部署到 GCP 虛擬機 (GCE Instance)
+      # 這裡範例使用 gcloud compute ssh/scp，這會利用剛剛 OIDC 驗證的身分自動登入機器
+      - name: Deploy to Compute Engine
+        run: |
+          # TODO: 填入你的機器資訊
+          INSTANCE_NAME="your-instance-name"
+          ZONE="asia-east1-a"  # 你的 GCP 機器所在區域
+          PROJECT="your-project-id"
+          APP_DIR="/path/to/your/app/on/server" # 伺服器上的專案路徑
+          SSH_USER="your-ssh-user" # 登入機器的使用者名稱
+          
+          # 將更新的程式碼傳送到機器上（排除不需要的檔案，可以自行調整）
+          gcloud compute scp --recurse \
+            ./src ./data ./package.json ./tsconfig.json ./bun.lock \
+            $SSH_USER@$INSTANCE_NAME:$APP_DIR \
+            --zone=$ZONE \
+            --project=$PROJECT
+            
+          # 在機器上執行指令：重新安裝套件並重啟服務
+          # 假設你在伺服器上是用 pm2 或 systemctl 來管理服務
+          gcloud compute ssh $SSH_USER@$INSTANCE_NAME \
+            --zone=$ZONE \
+            --project=$PROJECT \
+            --command="cd $APP_DIR && bun install && pm2 restart discord-bot"
