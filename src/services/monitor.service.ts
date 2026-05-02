@@ -74,6 +74,19 @@ export class MonitorServiceImpl implements MonitorService {
    */
   async addMonitoredUser(userId: string, guildId: string): Promise<Result<void>> {
     try {
+      // 從環境變數讀取上限，預設為 5
+      const maxUsers = parseInt(process.env.MAX_MONITORED_USERS_PER_GUILD || '5', 10);
+      
+      // 檢查是否超過人數上限
+      const currentUsers = this.monitoredUsers.get(guildId);
+      if (currentUsers && currentUsers.size >= maxUsers) {
+        return {
+          success: false,
+          error: `每個伺服器最多只能監控 ${maxUsers} 名用戶`,
+          details: { userId, guildId, code: ErrorCode.MONITOR_LIMIT_EXCEEDED },
+        };
+      }
+
       // 防止重複新增（記憶體層快速檢查）
       if (this.isUserMonitored(userId, guildId)) {
         return {

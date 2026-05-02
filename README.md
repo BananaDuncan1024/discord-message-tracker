@@ -1,126 +1,76 @@
-# Discord Message Monitor System
+# 🤖 Discord Message Guardian
 
-> 🤖 A Discord bot used to monitor specific users' message activities, automatically recovering and notifying when messages are deleted.
+> An automated tracking bot built specifically for Discord Server Administrators. When targeted users delete their messages, the bot instantly recovers and reposts them in the original channel.
 
-## Features
+## ✨ Core Features
 
-| Feature | Description |
-|------|------|
-| 🔍 **Message Monitoring** | Monitors specified users' messages across all channels in the server. |
-| 🔄 **Message Recovery** | Detects deleted messages and automatically sends a recovery notification in the original channel. |
-| 💾 **Smart Caching** | Retains messages for 7 days with LRU eviction strategy. |
-| 🔐 **Access Control** | Slash commands are restricted to server Administrators only. |
-| 📊 **Memory Monitoring** | Automatically tracks memory usage and performs aggressive cleanup when thresholds are exceeded. |
-| 📝 **Comprehensive Logging** | Winston log rotation (10MB limit, keeps last 5 files). |
-| 🔁 **Auto Retry** | Exponential backoff retries for Discord API errors. |
-| 🗄️ **Persistent Storage** | SQLite ensures monitoring settings are preserved across bot restarts. |
+- 🔍 **Precise Targeting**: Monitors only the users you specify (limit configurable via `.env`). Saves system resources and respects others' privacy.
+- 🔄 **In-Place Recovery**: The moment a monitored user deletes a message, the bot immediately posts the exact original text right back in the same channel.
+- 🔐 **Flexible Permissions**: By default, commands are restricted to "Administrators". However, Server Owners can easily grant access to specific roles (like Moderators) via Discord's native *Server Settings -> Integrations* menu!
+- 🗄️ **Auto-Memory**: Whether the bot restarts or disconnects, it automatically remembers your monitor list. No need to set it up again manually.
+- 🛡️ **Privacy First**: This project is fully designed for "Private Hosting". Your database and message logs exist solely on your own server.
 
-## Tech Stack
+---
 
-- **Runtime**: Bun v1.0+
-- **Discord Library**: Discord.js v14
-- **Database**: SQLite (using Bun's built-in `bun:sqlite`)
-- **Logging**: Winston
-- **Language**: TypeScript
-- **Testing**: Bun's built-in test runner
+## 🎮 How to Use (Commands)
 
-## Quick Start
-
-### 1. Install Dependencies
-
-```bash
-bun install
-```
-
-### 2. Set Environment Variables
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and fill in at least:
-
-```env
-DISCORD_TOKEN=your_discord_bot_token
-DISCORD_CLIENT_ID=your_discord_client_id
-```
-
-### 3. Configure in Discord Developer Portal
-
-1. Go to the [Discord Developer Portal](https://discord.com/developers/applications) and create an application.
-2. Under the **Bot** tab, enable the following **Privileged Gateway Intents**:
-   - `MESSAGE CONTENT INTENT`
-   - `SERVER MEMBERS INTENT`
-3. Copy the Bot Token and add it to your `.env` file.
-
-### 4. Start the Bot
-
-```bash
-# Development mode (recommended)
-bun dev
-
-# Production mode
-bun start
-```
-
-## Discord Slash Commands
-
-> ⚠️ All commands require **Administrator** permissions.
+Once the bot is invited to your server, simply type these commands in the chat (Admin only):
 
 | Command | Description |
 |------|------|
-| `/monitor add <@user>` | Add a user to monitor. (Cannot monitor the bot itself) |
-| `/monitor remove <@user>` | Stop monitoring a specific user. |
-| `/monitor list` | List all currently monitored users. |
+| `/monitor add <@user>` | ➕ Add a person to the monitor list (Limit is 5 by default). |
+| `/monitor remove <@user>` | ➖ Remove a person from the list. |
+| `/monitor list` | 📋 View exactly who the bot is currently monitoring. |
 
-## Environment Variables
+---
+
+## 🚀 Host Your Own Private Bot
+
+This open-source code is available for anyone to download. You can easily turn it into **your very own private bot**.
+
+### Step 1: Create Your Exclusive Bot
+1. Go to the [Discord Developer Portal](https://discord.com/developers/applications) and create a new Application.
+2. Navigate to the **Bot** tab, and **turn OFF `Public Bot`** (This ensures only YOU have permission to invite the bot to servers).
+3. On the same page, scroll down and **enable** these two Privileged Gateway Intents:
+   - `MESSAGE CONTENT INTENT` (Allows the bot to read message content)
+   - `SERVER MEMBERS INTENT` (Allows the bot to read the member list)
+4. Click `Reset Token` to generate and copy your `Bot Token`. Please keep this key absolutely secret!
+
+### Step 2: Download & Start
+We use the blazing-fast [Bun](https://bun.sh/) runtime. Make sure Bun is installed on your machine/server.
+
+```bash
+# 1. Install dependencies
+bun install
+
+# 2. Prepare the config file
+cp .env.example .env
+```
+
+Next, open the `.env` file with a text editor and fill in your unique info:
+```env
+DISCORD_TOKEN=Paste_your_copied_Bot_Token_here
+DISCORD_CLIENT_ID=Your_Application_ID(Found_in_General_Information)
+```
+
+```bash
+# 3. Start the bot!
+bun start
+```
+
+---
+
+## 🛠️ Advanced Settings (For Tweakers)
+
+If you wish to adjust the bot's internal behavior, you can add/modify the following in your `.env` file:
 
 | Variable | Description | Default |
 |------|------|--------|
-| `DISCORD_TOKEN` | Discord Bot Token (Required) | — |
-| `DISCORD_CLIENT_ID` | Discord Application ID (Required) | — |
-| `DB_PATH` | SQLite database path | `data/monitor.db` |
-| `MAX_MESSAGES_PER_USER` | Max cached messages per user | `500` |
-| `MAX_TOTAL_MEMORY_MB` | Max memory usage threshold (MB) | `700` |
-| `LOG_LEVEL` | Log level (debug/info/warn/error) | `info` |
+| `MAX_MONITORED_USERS_PER_GUILD` | Max users that can be monitored per server | `5` |
+| `MAX_MESSAGES_PER_USER` | The maximum number of cached messages remembered per user | `500` |
+| `DB_PATH` | Storage location for the memory database | `data/monitor.db` |
 
-## Project Structure
+---
 
-```
-.
-├── src/
-│   ├── services/
-│   │   ├── logger.service.ts       # Winston logging service
-│   │   ├── storage.service.ts      # SQLite persistence service
-│   │   ├── cache.service.ts        # Message cache service (w/ LRU)
-│   │   ├── memory-monitor.service.ts # Memory monitoring service
-│   │   ├── monitor.service.ts      # Core logic (monitoring, caching, recovery)
-│   │   └── index.ts
-│   ├── handlers/
-│   │   ├── command.handler.ts      # Slash command handler
-│   │   ├── event.handler.ts        # Discord event handler
-│   │   └── index.ts
-│   ├── utils/
-│   │   └── error-handler.ts        # Discord API error handling (w/ retry)
-│   ├── types/
-│   │   └── index.ts                # TypeScript type definitions
-│   ├── bot.ts                      # DiscordBot assembly class
-│   └── index.ts                    # Application entry point
-├── tests/
-│   ├── storage.service.test.ts     # StorageService tests
-│   ├── cache.service.test.ts       # CacheService tests
-│   ├── command.handler.test.ts     # CommandHandler tests
-│   ├── event.handler.test.ts       # EventHandler tests
-│   ├── monitor.service.test.ts     # MonitorService tests
-│   ├── integration.test.ts         # End-to-End integration tests
-│   ├── error-handler.test.ts       # ErrorHandler tests
-│   └── logger.service.test.ts      # LoggerService tests
-├── data/                           # SQLite Database (auto-created)
-├── logs/                           # Log files (auto-created)
-├── .env.example                    # Environment variables template
-└── tsconfig.json
-```
-
-## License
-
-[MIT](LICENSE)
+> 💡 **License**
+> This project is open-sourced under the [MIT](LICENSE) license. Feel free to download, modify, and host privately. All core architecture is designed with high-standard stability to guard your Discord server 24/7!
