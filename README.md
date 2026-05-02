@@ -1,122 +1,126 @@
-# Discord 訊息監控系統
+# Discord Message Monitor System
 
-> 🤖 Discord bot，用於監控特定用戶的訊息活動，並在訊息被刪除時自動恢復並通知。
+> 🤖 A Discord bot used to monitor specific users' message activities, automatically recovering and notifying when messages are deleted.
 
-## 功能特色
+## Features
 
-| 功能 | 說明 |
+| Feature | Description |
 |------|------|
-| 🔍 **訊息監控** | 監控指定用戶在伺服器內所有頻道的訊息 |
-| 🔄 **訊息恢復** | 偵測被刪除的訊息，自動在原頻道發送恢復通知 |
-| 💾 **智慧快取** | 保留 7 天訊息快取，支援 LRU 淘汰策略 |
-| 🔐 **權限控制** | 斜線指令僅限管理員操作 |
-| 📊 **記憶體監控** | 自動監控記憶體使用量，超過閾值時主動清理 |
-| 📝 **完整日誌** | Winston 日誌輪替（10MB 上限，保留 5 個檔案） |
-| 🔁 **自動重試** | Discord API 錯誤時使用指數退避重試 |
-| 🗄️ **持久化儲存** | SQLite 確保重啟後監控設定不遺失 |
+| 🔍 **Message Monitoring** | Monitors specified users' messages across all channels in the server. |
+| 🔄 **Message Recovery** | Detects deleted messages and automatically sends a recovery notification in the original channel. |
+| 💾 **Smart Caching** | Retains messages for 7 days with LRU eviction strategy. |
+| 🔐 **Access Control** | Slash commands are restricted to server Administrators only. |
+| 📊 **Memory Monitoring** | Automatically tracks memory usage and performs aggressive cleanup when thresholds are exceeded. |
+| 📝 **Comprehensive Logging** | Winston log rotation (10MB limit, keeps last 5 files). |
+| 🔁 **Auto Retry** | Exponential backoff retries for Discord API errors. |
+| 🗄️ **Persistent Storage** | SQLite ensures monitoring settings are preserved across bot restarts. |
 
-## 技術棧
+## Tech Stack
 
-- **執行環境**: Bun v1.0+
-- **Discord 函式庫**: Discord.js v14
-- **資料儲存**: SQLite（使用 Bun 內建的 `bun:sqlite`）
-- **日誌管理**: Winston
-- **程式語言**: TypeScript
-- **測試框架**: Bun 內建測試執行器
+- **Runtime**: Bun v1.0+
+- **Discord Library**: Discord.js v14
+- **Database**: SQLite (using Bun's built-in `bun:sqlite`)
+- **Logging**: Winston
+- **Language**: TypeScript
+- **Testing**: Bun's built-in test runner
 
-## 快速開始
+## Quick Start
 
-### 1. 安裝依賴
+### 1. Install Dependencies
 
 ```bash
 bun install
 ```
 
-### 2. 設定環境變數
+### 2. Set Environment Variables
 
 ```bash
 cp .env.example .env
 ```
 
-編輯 `.env`，至少填入：
+Edit `.env` and fill in at least:
 
 ```env
 DISCORD_TOKEN=your_discord_bot_token
 DISCORD_CLIENT_ID=your_discord_client_id
 ```
 
-### 3. 在 Discord Developer Portal 設定
+### 3. Configure in Discord Developer Portal
 
-1. 至 [Discord Developer Portal](https://discord.com/developers/applications) 建立應用程式
-2. 於 **Bot** 頁籤啟用以下 **Privileged Gateway Intents**：
+1. Go to the [Discord Developer Portal](https://discord.com/developers/applications) and create an application.
+2. Under the **Bot** tab, enable the following **Privileged Gateway Intents**:
    - `MESSAGE CONTENT INTENT`
    - `SERVER MEMBERS INTENT`
-3. 複製 Bot Token 填入 `.env`
+3. Copy the Bot Token and add it to your `.env` file.
 
-### 4. 啟動 Bot
+### 4. Start the Bot
 
 ```bash
-# 開發模式（推薦）
+# Development mode (recommended)
 bun dev
 
-# 正式模式
+# Production mode
 bun start
 ```
 
-## Discord 斜線指令
+## Discord Slash Commands
 
-> ⚠️ 所有指令均需要 **管理員** 權限
+> ⚠️ All commands require **Administrator** permissions.
 
-| 指令 | 說明 |
+| Command | Description |
 |------|------|
-| `/monitor add <@user>` | 新增要監控的用戶 |
-| `/monitor remove <@user>` | 停止監控指定用戶 |
-| `/monitor list` | 列出目前所有監控中的用戶 |
+| `/monitor add <@user>` | Add a user to monitor. (Cannot monitor the bot itself) |
+| `/monitor remove <@user>` | Stop monitoring a specific user. |
+| `/monitor list` | List all currently monitored users. |
 
-## 環境變數說明
+## Environment Variables
 
-| 變數 | 說明 | 預設值 |
+| Variable | Description | Default |
 |------|------|--------|
-| `DISCORD_TOKEN` | Discord Bot Token（必填） | — |
-| `DISCORD_CLIENT_ID` | Discord 應用程式 ID（必填） | — |
-| `DB_PATH` | SQLite 資料庫路徑 | `data/monitor.db` |
-| `MAX_MESSAGES_PER_USER` | 每用戶最大快取訊息數 | `500` |
-| `MAX_TOTAL_MEMORY_MB` | 最大記憶體使用量（MB） | `700` |
-| `LOG_LEVEL` | 日誌等級（debug/info/warn/error） | `info` |
+| `DISCORD_TOKEN` | Discord Bot Token (Required) | — |
+| `DISCORD_CLIENT_ID` | Discord Application ID (Required) | — |
+| `DB_PATH` | SQLite database path | `data/monitor.db` |
+| `MAX_MESSAGES_PER_USER` | Max cached messages per user | `500` |
+| `MAX_TOTAL_MEMORY_MB` | Max memory usage threshold (MB) | `700` |
+| `LOG_LEVEL` | Log level (debug/info/warn/error) | `info` |
 
-## 專案結構
+## Project Structure
 
 ```
 .
 ├── src/
 │   ├── services/
-│   │   ├── logger.service.ts       # Winston 日誌服務
-│   │   ├── storage.service.ts      # SQLite 持久化服務
-│   │   ├── cache.service.ts        # 訊息快取服務（含 LRU）
-│   │   ├── memory-monitor.service.ts # 記憶體監控服務
-│   │   ├── monitor.service.ts      # 核心業務邏輯（監控、快取、恢復）
+│   │   ├── logger.service.ts       # Winston logging service
+│   │   ├── storage.service.ts      # SQLite persistence service
+│   │   ├── cache.service.ts        # Message cache service (w/ LRU)
+│   │   ├── memory-monitor.service.ts # Memory monitoring service
+│   │   ├── monitor.service.ts      # Core logic (monitoring, caching, recovery)
 │   │   └── index.ts
 │   ├── handlers/
-│   │   ├── command.handler.ts      # 斜線指令處理器
-│   │   ├── event.handler.ts        # Discord 事件處理器
+│   │   ├── command.handler.ts      # Slash command handler
+│   │   ├── event.handler.ts        # Discord event handler
 │   │   └── index.ts
 │   ├── utils/
-│   │   └── error-handler.ts        # Discord API 錯誤處理（含重試）
+│   │   └── error-handler.ts        # Discord API error handling (w/ retry)
 │   ├── types/
-│   │   └── index.ts                # 所有 TypeScript 型別定義
-│   ├── bot.ts                      # DiscordBot 組裝類別
-│   └── index.ts                    # 主程式入口
+│   │   └── index.ts                # TypeScript type definitions
+│   ├── bot.ts                      # DiscordBot assembly class
+│   └── index.ts                    # Application entry point
 ├── tests/
-│   ├── storage.service.test.ts     # StorageService 單元測試（21 cases）
-│   ├── cache.service.test.ts       # CacheService 單元測試（46 cases）
-│   └── logger.service.test.ts      # Logger 單元測試
-├── data/                           # SQLite 資料庫（自動建立）
-├── logs/                           # 日誌檔案（自動建立）
-├── .env.example                    # 環境變數範本
+│   ├── storage.service.test.ts     # StorageService tests
+│   ├── cache.service.test.ts       # CacheService tests
+│   ├── command.handler.test.ts     # CommandHandler tests
+│   ├── event.handler.test.ts       # EventHandler tests
+│   ├── monitor.service.test.ts     # MonitorService tests
+│   ├── integration.test.ts         # End-to-End integration tests
+│   ├── error-handler.test.ts       # ErrorHandler tests
+│   └── logger.service.test.ts      # LoggerService tests
+├── data/                           # SQLite Database (auto-created)
+├── logs/                           # Log files (auto-created)
+├── .env.example                    # Environment variables template
 └── tsconfig.json
 ```
 
-## 授權
+## License
 
-MIT
-
+[MIT](LICENSE)
