@@ -80,6 +80,9 @@ const makeMockInteraction = (overrides: {
       getUser: mock(() => ({ id: targetUserId, tag: targetUserTag })),
       getSubcommand: mock(() => subcommand),
     },
+    client: {
+      user: { id: 'bot-id' }
+    },
     editReply,
     reply,
     deferReply,
@@ -161,6 +164,15 @@ describe('CommandHandler 單元測試 (8.3)', () => {
       expect(reply).toHaveBeenCalled();
       const replyContent = reply.mock.calls[0]![0].content as string;
       expect(replyContent).toContain('❌');
+    });
+
+    test('嘗試將機器人本身加入監控清單時應回覆錯誤訊息', async () => {
+      const { interaction, reply } = makeMockInteraction({ isAdmin: true, targetUserId: 'bot-id' });
+      await handler.handleAddMonitor(interaction);
+      expect(reply).toHaveBeenCalled();
+      const replyContent = reply.mock.calls[0]![0].content as string;
+      expect(replyContent).toContain('❌');
+      expect(replyContent).toContain('無法將機器人本身加入監控清單');
     });
 
     test('有權限且成功時應回覆成功訊息', async () => {

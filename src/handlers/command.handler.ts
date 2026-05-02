@@ -91,6 +91,12 @@ export class CommandHandlerImpl implements CommandHandler {
     }
 
     const targetUser = cmd.options.getUser('user', true);
+    
+    if (targetUser.id === interaction.client.user?.id) {
+      await this._replyError(cmd, '❌ 無法將機器人本身加入監控清單。');
+      return;
+    }
+
     const guildId = cmd.guildId!;
 
     await cmd.deferReply({ ephemeral: true });
