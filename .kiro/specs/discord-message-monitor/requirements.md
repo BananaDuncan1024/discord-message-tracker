@@ -26,6 +26,7 @@ Discord 訊息監控系統是一個 Discord bot，用於監控特定用戶在伺
 3. THE Bot SHALL 提供指令讓 Administrator 查看當前所有 Monitored_User 清單
 4. WHEN Administrator 新增 Monitored_User 時，THE Bot SHALL 確認該用戶存在於 Guild 中
 5. WHEN Administrator 新增已存在的 Monitored_User 時，THE Bot SHALL 回傳提示訊息表示該用戶已在監控清單中
+6. WHEN Administrator 嘗試新增 Bot 自身為 Monitored_User 時，THE Bot SHALL 拒絕該操作並回傳錯誤訊息
 
 ### 需求 2：訊息監控與快取
 
